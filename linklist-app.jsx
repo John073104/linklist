@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { LayoutGrid, Package, BarChart3, HelpCircle, Settings, Plus, Search, ChevronLeft, ChevronRight, List, Grid3x3, ExternalLink, X, Trash2, Eye, EyeOff, ArrowLeft, ShoppingBag, Play, Upload, LockKeyhole, Save, TrendingUp, MousePointerClick, Users, DollarSign, MessageCircle, Send, Inbox, Copy } from "lucide-react";
+import heroImage from "./Hero.jpg";
 
 const CREAM = "#F7F3E9";
 const CARD = "#FFFDF8";
@@ -13,7 +14,7 @@ function Logo({ avatar = "" }) {
   return (
     <div className="flex items-center gap-2">
       <div className="w-8 h-8 rounded-md flex items-center justify-center overflow-hidden" style={{ background: FOREST }}>
-        {avatar ? <img src={avatar} alt="Profile logo" className="w-full h-full object-cover" /> : <Package size={16} color="#F7F3E9" strokeWidth={2} />}
+        <img src={heroImage} alt="Linklist logo" className="w-full h-full object-cover" />
       </div>
       <span className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>Linklist</span>
     </div>
