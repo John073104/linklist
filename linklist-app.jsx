@@ -18,12 +18,12 @@ function Logo() {
   );
 }
 
-function AddProductModal({ onClose, onAdd }) {
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [commission, setCommission] = useState("9");
-  const [link, setLink] = useState("");
-  const [media, setMedia] = useState([]);
+function AddProductModal({ onClose, onAdd, initialProduct = null }) {
+  const [name, setName] = useState(initialProduct?.name || "");
+  const [price, setPrice] = useState(initialProduct?.price === "—" ? "" : initialProduct?.price || "");
+  const [commission, setCommission] = useState(initialProduct?.commission || "");
+  const [link, setLink] = useState(initialProduct?.link || "");
+  const [media, setMedia] = useState(initialProduct?.media || []);
   const [error, setError] = useState("");
 
   const handleMediaChange = (event) => {
@@ -56,14 +56,15 @@ function AddProductModal({ onClose, onAdd }) {
       return;
     }
     onAdd({
-      id: Date.now(),
+      ...(initialProduct || {}),
+      id: initialProduct?.id || Date.now(),
       name: name.trim(),
       price: price.trim() || "—",
-      commission: commission || "9",
+      commission: commission.trim(),
       link: link.trim(),
       media,
-      published: true,
-      createdAt: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
+      published: initialProduct?.published ?? true,
+      createdAt: initialProduct?.createdAt || new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }),
     });
     onClose();
   };
@@ -76,7 +77,7 @@ function AddProductModal({ onClose, onAdd }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>Add a product</h2>
+          <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>{initialProduct ? "Edit product" : "Add a product"}</h2>
           <button onClick={onClose} className="p-1.5 rounded-full hover:bg-black/5 transition-colors">
             <X size={18} color={INK} />
           </button>
@@ -106,7 +107,7 @@ function AddProductModal({ onClose, onAdd }) {
               />
             </div>
             <div>
-              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Commission %</label>
+              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Commission % <span style={{ color: `${INK}66` }}>(optional)</span></label>
               <input
                 value={commission}
                 onChange={(e) => setCommission(e.target.value.replace(/[^0-9.]/g, ""))}
@@ -133,7 +134,7 @@ function AddProductModal({ onClose, onAdd }) {
             <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Product media</label>
             <label className="mt-1 flex items-center justify-center gap-2 px-3 py-5 rounded-lg border border-dashed cursor-pointer hover:bg-black/5" style={{ borderColor: `${INK}33`, color: FOREST }}>
               <Upload size={16} />
-              <span className="text-sm">Upload up to 5 images or videos</span>
+              <span className="text-sm">Replace with up to 5 images or videos</span>
               <input type="file" accept="image/*,video/*" multiple onChange={handleMediaChange} className="sr-only" />
             </label>
             {media.length > 0 && <p className="text-xs mt-1" style={{ color: `${INK}77` }}>{media.length} media file{media.length === 1 ? "" : "s"} selected</p>}
@@ -154,7 +155,7 @@ function AddProductModal({ onClose, onAdd }) {
               className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
               style={{ background: FOREST, color: "#F7F3E9" }}
             >
-              Add product
+              {initialProduct ? "Save product" : "Add product"}
             </button>
           </div>
         </div>
@@ -234,7 +235,7 @@ function LinkCart({ links, onRemove, onOpenAll, onClear }) {
   );
 }
 
-function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart }) {
+function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onEdit }) {
   if (view === "grid") {
     return (
       <div className="rounded-xl overflow-hidden flex flex-col" style={{ background: CARD, border: `1px solid ${INK}14` }}>
@@ -252,6 +253,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart }) {
               {product.published ? <><EyeOff size={12} /> Unpublish</> : <><Eye size={12} /> Publish</>}
             </button>
             <button onClick={() => onAddToCart(product)} className="p-1.5 rounded-md border" style={{ borderColor: `${INK}22` }} aria-label="Add link to cart"><ShoppingBag size={13} color={FOREST} /></button>
+            <button onClick={() => onEdit(product)} className="px-2 py-1.5 rounded-md border text-xs font-medium" style={{ borderColor: `${INK}22`, color: INK }}>Edit</button>
             <button onClick={() => onDelete(product.id)} className="p-1.5 rounded-md border" style={{ borderColor: `${INK}22` }}>
               <Trash2 size={13} color="#B34A3C" />
             </button>
@@ -281,6 +283,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart }) {
         {product.published ? <EyeOff size={15} color={INK} /> : <Eye size={15} color={INK} />}
       </button>
       <button onClick={() => onAddToCart(product)} className="p-1.5 rounded-md hover:bg-black/5" title="Add link to cart"><ShoppingBag size={15} color={FOREST} /></button>
+      <button onClick={() => onEdit(product)} className="px-2 py-1.5 rounded-md hover:bg-black/5 text-xs font-medium" title="Edit product">Edit</button>
       <button onClick={() => onDelete(product.id)} className="p-1.5 rounded-md hover:bg-black/5" title="Delete">
         <Trash2 size={15} color="#B34A3C" />
       </button>
@@ -297,10 +300,14 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
   const [notice, setNotice] = useState("");
   const [dashboardView, setDashboardView] = useState("products");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const publicUrl = `${window.location.origin}${window.location.pathname}?view=public`;
 
   const addProduct = (p) => setProducts((prev) => [p, ...prev]);
   const togglePublish = (id) => setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, published: !p.published } : p)));
   const deleteProduct = (id) => setProducts((prev) => prev.filter((p) => p.id !== id));
+  const updateProduct = (product) => setProducts((prev) => prev.map((item) => item.id === product.id ? product : item));
   const addToCart = (product) => setCart((prev) => prev.some((item) => item.id === product.id) ? prev : [...prev, product]);
 
   let visible = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -389,7 +396,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
             <StatCard label="Total products" value={products.length} sub="in your catalog" />
             <StatCard label="Published" value={publishedCount} sub="live on your page" />
-            <StatCard label="Avg. commission" value={`${avgCommission}%`} sub="across all products" />
+            <StatCard label="Avg. commission" value={products.some((p) => p.commission) ? `${avgCommission}%` : "—"} sub="across all products" />
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
@@ -447,12 +454,12 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {visible.map((p) => (
-                  <ProductRow key={p.id} product={p} view="grid" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} />
+                  <ProductRow key={p.id} product={p} view="grid" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} onEdit={setEditingProduct} />
                 ))}
               </div>
             ) : (
               visible.map((p) => (
-                <ProductRow key={p.id} product={p} view="list" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} />
+                <ProductRow key={p.id} product={p} view="list" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} onEdit={setEditingProduct} />
               ))
             )}
           </div>
@@ -468,7 +475,9 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
         </div>}
       </div>
 
+      <div className="fixed top-20 right-4 z-30 flex items-center gap-2 rounded-xl px-3 py-2 shadow-lg" style={{ background: CARD, border: `1px solid ${INK}14` }}><ExternalLink size={15} color={FOREST} /><span className="hidden sm:inline text-xs max-w-xs truncate" style={{ color: INK }}>{publicUrl}</span><button onClick={() => { navigator.clipboard?.writeText(publicUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }} className="text-xs font-semibold" style={{ color: FOREST }}>{copied ? "Copied" : "Copy public link"}</button></div>
       {modalOpen && <AddProductModal onClose={() => setModalOpen(false)} onAdd={addProduct} />}
+      {editingProduct && <AddProductModal initialProduct={editingProduct} onClose={() => setEditingProduct(null)} onAdd={(product) => { updateProduct(product); setEditingProduct(null); }} />}
       {profileOpen && <ProfileModal profile={profile} onSave={setProfile} onClose={() => setProfileOpen(false)} />}
       <button onClick={onLock} className="fixed bottom-4 left-4 z-30 flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold shadow-lg" style={{ background: INK, color: "#fff" }}><LockKeyhole size={13} /> Lock dashboard</button>
       <LinkCart links={cart} onRemove={(id) => setCart((prev) => prev.filter((item) => item.id !== id))} onClear={() => setCart([])} onOpenAll={() => cart.forEach((product) => window.open(product.link, "_blank", "noopener,noreferrer"))} />
@@ -557,6 +566,14 @@ export default function App() {
   useEffect(() => localStorage.setItem("linklist-products", JSON.stringify(products)), [products]);
   useEffect(() => localStorage.setItem("linklist-cart", JSON.stringify(cart)), [cart]);
   useEffect(() => localStorage.setItem("linklist-profile", JSON.stringify(profile)), [profile]);
+  useEffect(() => {
+    const sync = (event) => {
+      if (event.key === "linklist-products" && event.newValue) setProducts(JSON.parse(event.newValue));
+      if (event.key === "linklist-profile" && event.newValue) setProfile(JSON.parse(event.newValue));
+    };
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
 
   if (page === "public") return <PublicPage products={products} setPage={setPage} cart={cart} setCart={setCart} profile={profile} />;
   if (!adminUnlocked) return <OwnerGate profile={profile} onUnlock={() => setAdminUnlocked(true)} />;
