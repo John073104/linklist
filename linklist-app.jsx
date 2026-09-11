@@ -21,10 +21,6 @@ function Logo() {
 
 function AddProductModal({ onClose, onAdd, initialProduct = null }) {
   const [name, setName] = useState(initialProduct?.name || "");
-  const [price, setPrice] = useState(initialProduct?.price === "—" ? "" : initialProduct?.price || "");
-  const [commission, setCommission] = useState(initialProduct?.commission || "");
-  const [buyers, setBuyers] = useState(String(initialProduct?.buyers ?? 0));
-  const [sales, setSales] = useState(String(initialProduct?.sales ?? 0));
   const [link, setLink] = useState(initialProduct?.link || "");
   const [media, setMedia] = useState(initialProduct?.media || []);
   const [error, setError] = useState("");
@@ -62,10 +58,10 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
       ...(initialProduct || {}),
       id: initialProduct?.id || Date.now(),
       name: name.trim(),
-      price: price.trim() || "—",
-      commission: commission.trim(),
-      buyers: Math.max(0, Number.parseInt(buyers, 10) || 0),
-      sales: Math.max(0, Number.parseFloat(sales) || 0),
+      price: initialProduct?.price || "—",
+      commission: initialProduct?.commission || "",
+      buyers: initialProduct?.buyers || 0,
+      sales: initialProduct?.sales || 0,
       clicks: initialProduct?.clicks || 0,
       link: link.trim(),
       media,
@@ -99,40 +95,6 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
               className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border focus:border-current transition-colors"
               style={{ borderColor: `${INK}22`, color: INK, background: CREAM }}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Price</label>
-              <input
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="$48.00"
-                className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border"
-                style={{ borderColor: `${INK}22`, color: INK, background: CREAM }}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Commission % <span style={{ color: `${INK}66` }}>(optional)</span></label>
-              <input
-                value={commission}
-                onChange={(e) => setCommission(e.target.value.replace(/[^0-9.]/g, ""))}
-                placeholder="9"
-                className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border"
-                style={{ borderColor: `${INK}22`, color: INK, background: CREAM }}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Buyers</label>
-              <input type="number" min="0" value={buyers} onChange={(event) => setBuyers(event.target.value)} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} />
-            </div>
-            <div>
-              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Sales value</label>
-              <input type="number" min="0" step="0.01" value={sales} onChange={(event) => setSales(event.target.value)} placeholder="0.00" className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} />
-            </div>
           </div>
 
           <div>
@@ -286,7 +248,7 @@ function LinkCart({ links, onRemove, onOpenAll, onClear }) {
   );
 }
 
-function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onEdit }) {
+function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onEdit, onUpdateField }) {
   if (view === "grid") {
     return (
       <div className="rounded-xl overflow-hidden flex flex-col" style={{ background: CARD, border: `1px solid ${INK}14` }}>
@@ -295,9 +257,11 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onE
         </div>
         <div className="p-4 flex flex-col gap-2 flex-1">
           <p className="font-semibold text-sm" style={{ color: INK }}>{product.name}</p>
-          <div className="flex items-center justify-between text-xs" style={{ color: `${INK}88` }}>
-            <span>{product.price}</span>
-            <span>{product.commission ? `${product.commission}% commission` : "Commission —"}</span>
+          <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: `${INK}88` }}>
+            <label>Price<input value={product.price === "—" ? "" : product.price} onChange={(event) => onUpdateField(product.id, "price", event.target.value || "—")} placeholder="$48.00" className="w-full mt-1 rounded-md border px-2 py-1.5 text-xs" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
+            <label>Commission %<input value={product.commission || ""} onChange={(event) => onUpdateField(product.id, "commission", event.target.value.replace(/[^0-9.]/g, ""))} placeholder="Optional" className="w-full mt-1 rounded-md border px-2 py-1.5 text-xs" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
+            <label>Buyers<input type="number" min="0" value={product.buyers || 0} onChange={(event) => onUpdateField(product.id, "buyers", Math.max(0, Number.parseInt(event.target.value, 10) || 0))} className="w-full mt-1 rounded-md border px-2 py-1.5 text-xs" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
+            <label>Sales value<input type="number" min="0" step="0.01" value={product.sales || 0} onChange={(event) => onUpdateField(product.id, "sales", Math.max(0, Number.parseFloat(event.target.value) || 0))} className="w-full mt-1 rounded-md border px-2 py-1.5 text-xs" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
           </div>
           <div className="flex gap-1.5 mt-auto pt-2">
             <button onClick={() => onTogglePublish(product.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-xs font-medium border" style={{ borderColor: `${INK}22`, color: INK }}>
@@ -322,8 +286,8 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onE
         <p className="font-semibold text-sm truncate" style={{ color: INK }}>{product.name}</p>
         <p className="text-xs truncate" style={{ color: `${INK}77` }}>{product.link}</p>
       </div>
-      <span className="text-xs w-16 text-right" style={{ color: `${INK}88` }}>{product.price}</span>
-      <span className="text-xs w-24 text-right" style={{ color: `${INK}88` }}>{product.commission ? `${product.commission}% comm.` : "—"}</span>
+      <label className="text-[10px] text-right" style={{ color: `${INK}88` }}>Price<input value={product.price === "—" ? "" : product.price} onChange={(event) => onUpdateField(product.id, "price", event.target.value || "—")} className="w-16 mt-1 rounded border px-1 py-1 text-xs text-right" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
+      <label className="text-[10px] text-right" style={{ color: `${INK}88` }}>Comm.<input value={product.commission || ""} onChange={(event) => onUpdateField(product.id, "commission", event.target.value.replace(/[^0-9.]/g, ""))} placeholder="—" className="w-20 mt-1 rounded border px-1 py-1 text-xs text-right" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
       <span
         className="text-xs px-2 py-1 rounded-full w-24 text-center"
         style={{ background: product.published ? `${FOREST}1A` : `${INK}0F`, color: product.published ? FOREST : `${INK}88` }}
@@ -359,6 +323,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
   const togglePublish = (id) => setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, published: !p.published } : p)));
   const deleteProduct = (id) => setProducts((prev) => prev.filter((p) => p.id !== id));
   const updateProduct = (product) => setProducts((prev) => prev.map((item) => item.id === product.id ? product : item));
+  const updateProductField = (id, field, value) => setProducts((prev) => prev.map((item) => item.id === id ? { ...item, [field]: value } : item));
   const addToCart = (product) => setCart((prev) => prev.some((item) => item.id === product.id) ? prev : [...prev, product]);
   const unreadMessages = messages.filter((message) => !message.read).length;
 
@@ -426,7 +391,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
         {dashboardView === "overview" && <OverviewPanel products={products} setDashboardView={setDashboardView} setPage={setPage} openSettings={() => setProfileOpen(true)} />}
         {dashboardView === "analytics" && <AnalyticsPanel products={products} />}
         {dashboardView === "messages" && <MessagesPanel messages={messages} onMarkRead={(id) => setMessages((current) => current.map((message) => message.id === id ? { ...message, read: !message.read } : message))} onDelete={(id) => setMessages((current) => current.filter((message) => message.id !== id))} />}
-        {dashboardView === "products" && <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl">
+        {dashboardView === "products" && <div className="w-full px-4 sm:px-8 py-6 sm:py-8">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
             <div>
               <p className="text-xs tracking-wider font-medium mb-1" style={{ color: `${INK}66` }}>YOUR CATALOG</p>
@@ -506,12 +471,12 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {visible.map((p) => (
-                  <ProductRow key={p.id} product={p} view="grid" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} onEdit={setEditingProduct} />
+                  <ProductRow key={p.id} product={p} view="grid" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} onEdit={setEditingProduct} onUpdateField={updateProductField} />
                 ))}
               </div>
             ) : (
               visible.map((p) => (
-                <ProductRow key={p.id} product={p} view="list" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} onEdit={setEditingProduct} />
+                <ProductRow key={p.id} product={p} view="list" onTogglePublish={togglePublish} onDelete={deleteProduct} onAddToCart={addToCart} onEdit={setEditingProduct} onUpdateField={updateProductField} />
               ))
             )}
           </div>
@@ -527,7 +492,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
         </div>}
       </div>
 
-      <div className="fixed top-20 right-4 z-30 flex items-center gap-2 rounded-xl px-3 py-2 shadow-lg" style={{ background: CARD, border: `1px solid ${INK}14` }}><ExternalLink size={15} color={FOREST} /><span className="hidden sm:inline text-xs max-w-xs truncate" style={{ color: INK }}>{publicUrl}</span><button onClick={() => { navigator.clipboard?.writeText(publicUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }} className="text-xs font-semibold" style={{ color: FOREST }}>{copied ? "Copied" : "Copy public link"}</button></div>
+      <div className="fixed bottom-4 right-4 z-30 flex items-center gap-2 rounded-xl px-3 py-2 shadow-lg" style={{ background: CARD, border: `1px solid ${INK}14` }}><ExternalLink size={15} color={FOREST} /><span className="hidden lg:inline text-xs max-w-xs truncate" style={{ color: INK }}>{publicUrl}</span><button onClick={() => { navigator.clipboard?.writeText(publicUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }} className="text-xs font-semibold" style={{ color: FOREST }}>{copied ? "Copied" : "Copy public link"}</button></div>
       {modalOpen && <AddProductModal onClose={() => setModalOpen(false)} onAdd={addProduct} />}
       {editingProduct && <AddProductModal initialProduct={editingProduct} onClose={() => setEditingProduct(null)} onAdd={(product) => { updateProduct(product); setEditingProduct(null); }} />}
       {profileOpen && <ProfileModal profile={profile} onSave={setProfile} onClose={() => setProfileOpen(false)} />}
