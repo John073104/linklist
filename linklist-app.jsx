@@ -434,9 +434,9 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
             {visible.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <Package size={40} color={`${INK}44`} />
-                <p className="text-xl font-bold mt-4" style={{ fontFamily: "Georgia, serif", color: INK }}>No products found</p>
+                <p className="text-xl font-bold mt-4" style={{ fontFamily: "Georgia, serif", color: INK }}>{products.length === 0 ? `Welcome to ${profile.name}'s Linklist` : "No products found"}</p>
                 <p className="text-sm mt-1" style={{ color: `${INK}77` }}>
-                  {products.length === 0 ? "Your guest catalog is empty. Add your first affiliate product to get started." : "Try a different search or filter."}
+                  {products.length === 0 ? "Your catalog is ready. Add your first recommendation to share it with your audience." : "Try a different search or filter."}
                 </p>
                 {products.length === 0 && (
                   <button onClick={() => setModalOpen(true)} className="text-sm font-medium underline mt-4" style={{ color: FOREST }}>
@@ -508,10 +508,10 @@ function PublicPage({ products, setPage, cart, setCart, profile }) {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
         {published.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center rounded-xl" style={{ background: CARD, border: `1px dashed ${INK}22` }}>
-            <Package size={36} color={`${INK}44`} />
-            <p className="text-lg font-bold mt-3" style={{ fontFamily: "Georgia, serif", color: INK }}>Nothing here yet</p>
-            <p className="text-sm mt-1" style={{ color: `${INK}77` }}>Check back soon — new picks are on the way.</p>
+          <div className="flex flex-col items-center justify-center py-24 px-6 text-center rounded-xl" style={{ background: CARD, border: `1px dashed ${INK}22` }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: `${GOLD}33` }}><Package size={28} color={GOLD} /></div>
+            <p className="text-2xl font-bold mt-4" style={{ fontFamily: "Georgia, serif", color: INK }}>Welcome to {profile.name}'s picks</p>
+            <p className="text-sm mt-2 max-w-md" style={{ color: `${INK}77` }}>{profile.bio} New recommendations will appear here soon.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
