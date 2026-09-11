@@ -527,7 +527,6 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
         </div>}
       </div>
 
-      <div className="fixed bottom-4 right-4 z-30 flex items-center gap-2 rounded-xl px-3 py-2 shadow-lg" style={{ background: CARD, border: `1px solid ${INK}14` }}><ExternalLink size={15} color={FOREST} /><span className="hidden lg:inline text-xs max-w-xs truncate" style={{ color: INK }}>{publicUrl}</span><button onClick={() => { navigator.clipboard?.writeText(publicUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }} className="text-xs font-semibold" style={{ color: FOREST }}>{copied ? "Copied" : "Copy public link"}</button></div>
       {modalOpen && <AddProductModal onClose={() => setModalOpen(false)} onAdd={addProduct} />}
       {editingProduct && <AddProductModal initialProduct={editingProduct} onClose={() => setEditingProduct(null)} onAdd={(product) => { updateProduct(product); setEditingProduct(null); }} />}
       {profileOpen && <ProfileModal profile={profile} onSave={setProfile} onClose={() => setProfileOpen(false)} />}
