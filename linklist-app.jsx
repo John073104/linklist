@@ -6,13 +6,13 @@ const CARD = "#FFFDF8";
 const INK = "#1F1B14";
 const GOLD = "#B8935F";
 const FOREST = "#2E4A3D";
-const DEFAULT_PROFILE = { name: "John Lloyd B. Jardines", bio: "Products I actually use and recommend.", passcode: "linklist" };
+const DEFAULT_PROFILE = { name: "John Lloyd B. Jardines", bio: "Products I actually use and recommend.", passcode: "linklist", logo: "" };
 
-function Logo() {
+function Logo({ avatar = "" }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: FOREST }}>
-        <Package size={16} color="#F7F3E9" strokeWidth={2} />
+      <div className="w-8 h-8 rounded-md flex items-center justify-center overflow-hidden" style={{ background: FOREST }}>
+        {avatar ? <img src={avatar} alt="Profile logo" className="w-full h-full object-cover" /> : <Package size={16} color="#F7F3E9" strokeWidth={2} />}
       </div>
       <span className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>Linklist</span>
     </div>
@@ -158,12 +158,24 @@ function StatCard({ label, value, sub }) {
 function ProfileModal({ profile, onSave, onClose }) {
   const [draft, setDraft] = useState(profile);
   const [error, setError] = useState("");
+  const handleLogoChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Choose an image file for your profile logo.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setDraft((current) => ({ ...current, logo: reader.result }));
+    reader.onerror = () => setError("That image could not be uploaded.");
+    reader.readAsDataURL(file);
+  };
   const save = () => {
     if (!draft.name.trim() || !draft.passcode.trim()) {
       setError("Display name and passcode cannot be blank.");
       return;
     }
-    onSave({ ...draft, name: draft.name.trim(), bio: draft.bio.trim() || "Products I actually use and recommend.", passcode: draft.passcode.trim() });
+    onSave({ ...draft, name: draft.name.trim(), bio: draft.bio.trim() || "Products I actually use and recommend.", passcode: draft.passcode.trim(), logo: draft.logo || "" });
     onClose();
   };
   return (
@@ -171,6 +183,14 @@ function ProfileModal({ profile, onSave, onClose }) {
       <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: CARD, border: `1px solid ${GOLD}33` }} onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between mb-5"><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>Account settings</h2><button onClick={onClose} aria-label="Close settings"><X size={18} /></button></div>
         <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Profile logo</label>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center" style={{ background: `${GOLD}33` }}>{draft.logo ? <img src={draft.logo} alt="Profile logo preview" className="w-full h-full object-cover" /> : <Package size={22} color={GOLD} />}</div>
+              <label className="cursor-pointer rounded-lg border px-3 py-2 text-xs font-medium" style={{ borderColor: `${INK}22`, color: FOREST }}>Upload logo<input type="file" accept="image/*" onChange={handleLogoChange} className="sr-only" /></label>
+              {draft.logo && <button onClick={() => setDraft((current) => ({ ...current, logo: "" }))} className="text-xs font-medium" style={{ color: "#B34A3C" }}>Delete</button>}
+            </div>
+          </div>
           <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Display name<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
           <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Bio<input value={draft.bio} onChange={(event) => setDraft({ ...draft, bio: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
           <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Owner passcode<input type="password" value={draft.passcode} onChange={(event) => setDraft({ ...draft, passcode: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
@@ -338,7 +358,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
       {/* Sidebar */}
       <div className="hidden md:flex w-60 shrink-0 border-r flex-col justify-between" style={{ borderColor: `${INK}14` }}>
         <div>
-          <div className="p-5"><Logo /></div>
+          <div className="p-5"><Logo avatar={profile.logo} /></div>
           <div className="px-3 mt-4">
             <p className="text-xs tracking-wider font-medium px-3 mb-2" style={{ color: `${INK}66` }}>WORKSPACE</p>
             <div className="space-y-0.5">
@@ -365,7 +385,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
             <Settings size={16} /> Settings
           </button>
           <div className="flex items-center gap-2 pt-3 mt-2 border-t" style={{ borderColor: `${INK}14` }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: GOLD, color: "#fff" }}>JL</div>
+            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold" style={{ background: GOLD, color: "#fff" }}>{profile.logo ? <img src={profile.logo} alt="Profile" className="w-full h-full object-cover" /> : "JL"}</div>
             <div className="text-xs">
               <p className="font-medium truncate" style={{ color: INK }}>{profile.name}</p>
               <p style={{ color: `${INK}77` }}>Owner account</p>
@@ -381,6 +401,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
           <div className="flex items-center gap-3">
             <button onClick={() => setDashboardView("overview")} className="hidden sm:block text-xs" style={{ color: `${INK}77` }}>Overview</button>
             <button onClick={() => setDashboardView("analytics")} className="hidden sm:block text-xs" style={{ color: `${INK}77` }}>Analytics</button>
+            <button onClick={onLock} className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold" style={{ borderColor: `${INK}22`, color: INK }}><LockKeyhole size={13} /> Lock</button>
             <button onClick={() => setPage("public")} className="md:hidden flex items-center gap-1.5 text-xs font-medium" style={{ color: FOREST }}>
               <ExternalLink size={14} /> View page
             </button>
@@ -496,7 +517,6 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
       {modalOpen && <AddProductModal onClose={() => setModalOpen(false)} onAdd={addProduct} />}
       {editingProduct && <AddProductModal initialProduct={editingProduct} onClose={() => setEditingProduct(null)} onAdd={(product) => { updateProduct(product); setEditingProduct(null); }} />}
       {profileOpen && <ProfileModal profile={profile} onSave={setProfile} onClose={() => setProfileOpen(false)} />}
-      <button onClick={onLock} className="fixed bottom-4 left-4 z-30 flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold shadow-lg" style={{ background: INK, color: "#fff" }}><LockKeyhole size={13} /> Lock dashboard</button>
       <LinkCart links={cart} onRemove={(id) => setCart((prev) => prev.filter((item) => item.id !== id))} onClear={() => setCart([])} onOpenAll={() => cart.forEach((product) => window.open(product.link, "_blank", "noopener,noreferrer"))} />
       {notice && <button onClick={() => setNotice("")} className="fixed bottom-4 left-4 z-40 max-w-xs rounded-lg px-4 py-3 text-left text-xs shadow-lg" style={{ background: INK, color: "#fff" }}>{notice}</button>}
     </div>
@@ -523,12 +543,12 @@ function PublicPage({ products, setPage, cart, setCart, profile, setProducts, se
   return (
     <div className="min-h-screen" style={{ background: CREAM, fontFamily: "system-ui, sans-serif" }}>
       <div className="flex items-center justify-between gap-3 px-4 sm:px-8 py-5 border-b" style={{ borderColor: `${INK}14` }}>
-        <Logo />
+        <Logo avatar={profile.logo} />
         <span className="text-xs sm:text-sm" style={{ color: `${INK}77` }}>Public collection</span>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14 text-center">
-        <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-xl font-bold mb-4" style={{ background: GOLD, color: "#fff" }}>JL</div>
+        <div className="w-16 h-16 rounded-full mx-auto overflow-hidden flex items-center justify-center text-xl font-bold mb-4" style={{ background: GOLD, color: "#fff" }}>{profile.logo ? <img src={profile.logo} alt="Profile" className="w-full h-full object-cover" /> : "JL"}</div>
         <h1 className="text-3xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>{profile.name}'s picks</h1>
         <p className="text-sm mt-2" style={{ color: `${INK}88` }}>{profile.bio}</p>
       </div>
