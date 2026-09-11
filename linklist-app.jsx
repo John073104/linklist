@@ -622,6 +622,17 @@ export default function App() {
     return { ...DEFAULT_PROFILE, ...saved, name: saved.name?.trim() || DEFAULT_PROFILE.name, bio: saved.bio?.trim() || DEFAULT_PROFILE.bio, passcode: saved.passcode?.trim() || DEFAULT_PROFILE.passcode };
   });
 
+  useEffect(() => {
+    let favicon = document.querySelector('link[rel="icon"]');
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.rel = "icon";
+      document.head.appendChild(favicon);
+    }
+    favicon.href = heroImage;
+    document.title = "Linklist";
+  }, []);
+
   useEffect(() => localStorage.setItem("linklist-products", JSON.stringify(products)), [products]);
   useEffect(() => localStorage.setItem("linklist-cart", JSON.stringify(cart)), [cart]);
   useEffect(() => localStorage.setItem("linklist-profile", JSON.stringify(profile)), [profile]);
