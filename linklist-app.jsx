@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { LayoutGrid, Package, BarChart3, HelpCircle, Settings, Plus, Search, ChevronLeft, ChevronRight, List, Grid3x3, ExternalLink, X, Trash2, Eye, EyeOff, ArrowLeft, ShoppingBag, Play, Upload } from "lucide-react";
+import { LayoutGrid, Package, BarChart3, HelpCircle, Settings, Plus, Search, ChevronLeft, ChevronRight, List, Grid3x3, ExternalLink, X, Trash2, Eye, EyeOff, ArrowLeft, ShoppingBag, Play, Upload, UserRound, LockKeyhole, Save, TrendingUp } from "lucide-react";
 
 const CREAM = "#F7F3E9";
 const CARD = "#FFFDF8";
@@ -175,6 +175,44 @@ function StatCard({ label, value, sub }) {
   );
 }
 
+function ProfileModal({ profile, onSave, onClose }) {
+  const [draft, setDraft] = useState(profile);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(31,27,20,0.45)" }} onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: CARD, border: `1px solid ${GOLD}33` }} onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5"><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>Account settings</h2><button onClick={onClose} aria-label="Close settings"><X size={18} /></button></div>
+        <div className="space-y-4">
+          <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Display name<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
+          <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Bio<input value={draft.bio} onChange={(event) => setDraft({ ...draft, bio: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
+          <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Owner passcode<input type="password" value={draft.passcode} onChange={(event) => setDraft({ ...draft, passcode: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
+          <p className="text-xs" style={{ color: `${INK}77` }}>This static site uses a browser passcode lock. For stronger protection, connect the app to a real authentication service.</p>
+          <button onClick={() => { onSave(draft); onClose(); }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium" style={{ background: FOREST, color: "#fff" }}><Save size={15} /> Save changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OwnerGate({ profile, onUnlock }) {
+  const [passcode, setPasscode] = useState("");
+  const [error, setError] = useState("");
+  const submit = () => passcode === profile.passcode ? onUnlock() : setError("That passcode is not correct.");
+  return <div className="min-h-screen flex items-center justify-center p-4" style={{ background: CREAM }}><div className="w-full max-w-sm rounded-2xl p-6 shadow-xl" style={{ background: CARD, border: `1px solid ${INK}14` }}><div className="w-12 h-12 rounded-xl mx-auto flex items-center justify-center mb-4" style={{ background: FOREST }}><LockKeyhole color="#fff" size={22} /></div><h1 className="text-2xl text-center font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>Owner dashboard</h1><p className="text-sm text-center mt-2 mb-5" style={{ color: `${INK}77` }}>Enter your owner passcode to manage Linklist.</p><input autoFocus type="password" value={passcode} onChange={(event) => setPasscode(event.target.value)} onKeyDown={(event) => event.key === "Enter" && submit()} placeholder="Owner passcode" className="w-full px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} />{error && <p className="text-xs mt-2" style={{ color: "#B34A3C" }}>{error}</p>}<button onClick={submit} className="w-full mt-4 py-2.5 rounded-lg text-sm font-medium" style={{ background: FOREST, color: "#fff" }}>Enter dashboard</button></div></div>;
+}
+
+function OverviewPanel({ products, setDashboardView, setPage }) {
+  const published = products.filter((product) => product.published).length;
+  const mediaCount = products.reduce((total, product) => total + (product.media?.length || 0), 0);
+  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>WORKSPACE OVERVIEW</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Good to see you.</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>A quick view of your Linklist workspace.</p><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><StatCard label="Catalog size" value={products.length} sub="products" /><StatCard label="Live picks" value={published} sub="published" /><StatCard label="Media assets" value={mediaCount} sub="uploaded" /></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Next steps</h2><div className="space-y-3 mt-4 text-sm" style={{ color: `${INK}88` }}><button onClick={() => setDashboardView("products")} className="block w-full text-left hover:underline">Add products to your catalog</button><button onClick={() => setDashboardView("analytics")} className="block w-full text-left hover:underline">Review link performance</button><button onClick={() => setDashboardView("settings")} className="block w-full text-left hover:underline">Update your account profile</button></div></div><div className="rounded-xl p-5" style={{ background: FOREST, color: "#fff" }}><TrendingUp size={22} /><h2 className="font-semibold mt-3">Public page</h2><p className="text-sm mt-1 opacity-80">Your visitors can only see published products, never this dashboard.</p><button onClick={() => setPage("public")} className="mt-4 rounded-lg px-3 py-2 text-xs font-semibold" style={{ background: GOLD }}>Open public page</button></div></div></div>;
+}
+
+function AnalyticsPanel({ products }) {
+  const published = products.filter((product) => product.published).length;
+  const draft = products.length - published;
+  const commissions = products.reduce((total, product) => total + Number.parseFloat(product.commission || 0), 0);
+  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>PERFORMANCE</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Analytics</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Catalog health and commission overview.</p><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><StatCard label="Published rate" value={products.length ? `${Math.round((published / products.length) * 100)}%` : "0%"} sub="of products" /><StatCard label="Draft products" value={draft} sub="need review" /><StatCard label="Commission total" value={`${commissions.toFixed(1)}%`} sub="listed rates" /></div><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Catalog status</h2><div className="mt-4 h-4 rounded-full overflow-hidden flex" style={{ background: `${INK}0F` }}><div style={{ width: `${products.length ? (published / products.length) * 100 : 0}%`, background: FOREST }} /><div style={{ flex: 1, background: GOLD }} /></div><div className="flex justify-between text-xs mt-2" style={{ color: `${INK}77` }}><span>{published} published</span><span>{draft} draft</span></div>{!products.length && <p className="text-sm mt-6" style={{ color: `${INK}77` }}>Add your first product to start collecting useful catalog insights.</p>}</div></div>;
+}
+
 function MediaStrip({ product, compact = false }) {
   const media = product.media?.length ? product.media : (product.image ? [{ src: product.image, type: "image/legacy" }] : []);
   if (!media.length) return <Package size={compact ? 18 : 28} color={GOLD} />;
@@ -223,7 +261,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart }) {
     );
   }
   return (
-    <div className="flex items-center gap-4 py-3 px-2 border-b" style={{ borderColor: `${INK}0F` }}>
+    <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_5rem_6rem_6rem_auto_auto_auto] items-center gap-3 py-3 px-2 border-b" style={{ borderColor: `${INK}0F` }}>
       <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${GOLD}22` }}>
         <MediaStrip product={product} compact />
       </div>
@@ -250,13 +288,15 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart }) {
   );
 }
 
-function CreatorDashboard({ products, setProducts, setPage, cart, setCart }) {
+function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profile, setProfile, onLock }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("newest");
   const [view, setView] = useState("list");
   const [notice, setNotice] = useState("");
+  const [dashboardView, setDashboardView] = useState("products");
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const addProduct = (p) => setProducts((prev) => [p, ...prev]);
   const togglePublish = (id) => setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, published: !p.published } : p)));
@@ -282,13 +322,13 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart }) {
           <div className="px-3 mt-4">
             <p className="text-xs tracking-wider font-medium px-3 mb-2" style={{ color: `${INK}66` }}>WORKSPACE</p>
             <div className="space-y-0.5">
-              <button onClick={() => setNotice("Overview is represented by your catalog stats below.")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: INK }}>
+              <button onClick={() => setDashboardView("overview")} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${dashboardView === "overview" ? "font-medium" : ""}`} style={{ background: dashboardView === "overview" ? `${GOLD}2A` : "transparent", color: INK }}>
                 <LayoutGrid size={16} /> Overview
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium" style={{ background: `${GOLD}2A`, color: INK }}>
+              <button onClick={() => setDashboardView("products")} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${dashboardView === "products" ? "font-medium" : ""}`} style={{ background: dashboardView === "products" ? `${GOLD}2A` : "transparent", color: INK }}>
                 <Package size={16} /> Products
               </button>
-              <button onClick={() => setNotice("Analytics will appear as your links collect activity.")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: INK }}>
+              <button onClick={() => setDashboardView("analytics")} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${dashboardView === "analytics" ? "font-medium" : ""}`} style={{ background: dashboardView === "analytics" ? `${GOLD}2A` : "transparent", color: INK }}>
                 <BarChart3 size={16} /> Analytics
               </button>
             </div>
@@ -301,14 +341,14 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart }) {
           <button onClick={() => setNotice("Help: add products, publish them, then open your public page.")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: INK }}>
             <HelpCircle size={16} /> Help center
           </button>
-          <button onClick={() => setNotice("Your catalog is saved in this browser automatically.")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: INK }}>
+          <button onClick={() => setProfileOpen(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: INK }}>
             <Settings size={16} /> Settings
           </button>
           <div className="flex items-center gap-2 pt-3 mt-2 border-t" style={{ borderColor: `${INK}14` }}>
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: GOLD, color: "#fff" }}>JL</div>
             <div className="text-xs">
-              <p className="font-medium" style={{ color: INK }}>John Lloyd B. Jard...</p>
-              <p style={{ color: `${INK}77` }}>Guest creator account</p>
+              <p className="font-medium truncate" style={{ color: INK }}>{profile.name}</p>
+              <p style={{ color: `${INK}77` }}>Owner account</p>
             </div>
           </div>
         </div>
@@ -317,8 +357,10 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart }) {
       {/* Main */}
       <div className="flex-1">
         <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b" style={{ borderColor: `${INK}14` }}>
-          <p className="text-sm" style={{ color: `${INK}88` }}>Workspace / <span style={{ color: INK }}>Products</span></p>
+          <p className="text-sm" style={{ color: `${INK}88` }}>Workspace / <span style={{ color: INK }}>{dashboardView[0].toUpperCase() + dashboardView.slice(1)}</span></p>
           <div className="flex items-center gap-3">
+            <button onClick={() => setDashboardView("overview")} className="hidden sm:block text-xs" style={{ color: `${INK}77` }}>Overview</button>
+            <button onClick={() => setDashboardView("analytics")} className="hidden sm:block text-xs" style={{ color: `${INK}77` }}>Analytics</button>
             <button onClick={() => setPage("public")} className="md:hidden flex items-center gap-1.5 text-xs font-medium" style={{ color: FOREST }}>
               <ExternalLink size={14} /> View page
             </button>
@@ -326,7 +368,9 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart }) {
           </div>
         </div>
 
-        <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl">
+        {dashboardView === "overview" && <OverviewPanel products={products} setDashboardView={setDashboardView} setPage={setPage} />}
+        {dashboardView === "analytics" && <AnalyticsPanel products={products} />}
+        {dashboardView === "products" && <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
             <div>
               <p className="text-xs tracking-wider font-medium mb-1" style={{ color: `${INK}66` }}>YOUR CATALOG</p>
@@ -386,7 +430,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart }) {
             </button>
           </div>
 
-          <div className="rounded-xl mt-4" style={{ background: view === "list" ? CARD : "transparent", border: view === "list" ? `1px solid ${INK}14` : "none", padding: view === "list" ? "8px 12px" : 0 }}>
+          <div className="rounded-xl mt-4 overflow-x-auto" style={{ background: view === "list" ? CARD : "transparent", border: view === "list" ? `1px solid ${INK}14` : "none", padding: view === "list" ? "8px 12px" : 0 }}>
             {visible.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <Package size={40} color={`${INK}44`} />
@@ -421,17 +465,19 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart }) {
               <button onClick={() => setNotice("All products are shown on this page.")} className="p-1.5 rounded-md border" style={{ borderColor: `${INK}22` }} aria-label="Next page"><ChevronRight size={14} /></button>
             </div>
           </div>
-        </div>
+        </div>}
       </div>
 
       {modalOpen && <AddProductModal onClose={() => setModalOpen(false)} onAdd={addProduct} />}
+      {profileOpen && <ProfileModal profile={profile} onSave={setProfile} onClose={() => setProfileOpen(false)} />}
+      <button onClick={onLock} className="fixed bottom-4 left-4 z-30 flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold shadow-lg" style={{ background: INK, color: "#fff" }}><LockKeyhole size={13} /> Lock dashboard</button>
       <LinkCart links={cart} onRemove={(id) => setCart((prev) => prev.filter((item) => item.id !== id))} onClear={() => setCart([])} onOpenAll={() => cart.forEach((product) => window.open(product.link, "_blank", "noopener,noreferrer"))} />
       {notice && <button onClick={() => setNotice("")} className="fixed bottom-4 left-4 z-40 max-w-xs rounded-lg px-4 py-3 text-left text-xs shadow-lg" style={{ background: INK, color: "#fff" }}>{notice}</button>}
     </div>
   );
 }
 
-function PublicPage({ products, setPage, cart, setCart }) {
+function PublicPage({ products, setPage, cart, setCart, profile }) {
   const [toast, setToast] = useState("");
   const published = products.filter((p) => p.published);
 
@@ -451,15 +497,13 @@ function PublicPage({ products, setPage, cart, setCart }) {
     <div className="min-h-screen" style={{ background: CREAM, fontFamily: "system-ui, sans-serif" }}>
       <div className="flex items-center justify-between gap-3 px-4 sm:px-8 py-5 border-b" style={{ borderColor: `${INK}14` }}>
         <Logo />
-        <button onClick={() => setPage("creator")} className="flex items-center gap-1.5 text-xs sm:text-sm font-medium" style={{ color: FOREST }}>
-          <ArrowLeft size={15} /> Back to dashboard
-        </button>
+        <span className="text-xs sm:text-sm" style={{ color: `${INK}77` }}>Public collection</span>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14 text-center">
         <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-xl font-bold mb-4" style={{ background: GOLD, color: "#fff" }}>JL</div>
         <h1 className="text-3xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>John Lloyd's picks</h1>
-        <p className="text-sm mt-2" style={{ color: `${INK}88` }}>Products I actually use and recommend. Tap anything to check it out.</p>
+        <p className="text-sm mt-2" style={{ color: `${INK}88` }}>{profile.bio}</p>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
@@ -505,15 +549,18 @@ function PublicPage({ products, setPage, cart, setCart }) {
 
 export default function App() {
   const [page, setPage] = useState("creator");
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem("linklist-products") || "[]"));
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("linklist-cart") || "[]"));
+  const [profile, setProfile] = useState(() => JSON.parse(localStorage.getItem("linklist-profile") || JSON.stringify({ name: "John Lloyd B. Jardines", bio: "Products I actually use and recommend.", passcode: "linklist" })));
 
   useEffect(() => localStorage.setItem("linklist-products", JSON.stringify(products)), [products]);
   useEffect(() => localStorage.setItem("linklist-cart", JSON.stringify(cart)), [cart]);
+  useEffect(() => localStorage.setItem("linklist-profile", JSON.stringify(profile)), [profile]);
 
-  return page === "creator" ? (
-    <CreatorDashboard products={products} setProducts={setProducts} setPage={setPage} cart={cart} setCart={setCart} />
-  ) : (
-    <PublicPage products={products} setPage={setPage} cart={cart} setCart={setCart} />
+  if (page === "public") return <PublicPage products={products} setPage={setPage} cart={cart} setCart={setCart} profile={profile} />;
+  if (!adminUnlocked) return <OwnerGate profile={profile} onUnlock={() => setAdminUnlocked(true)} />;
+  return (
+    <CreatorDashboard products={products} setProducts={setProducts} setPage={setPage} cart={cart} setCart={setCart} profile={profile} setProfile={setProfile} onLock={() => setAdminUnlocked(false)} />
   );
 }
