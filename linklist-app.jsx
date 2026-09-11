@@ -22,7 +22,8 @@ function Logo({ avatar = "" }) {
 
 function AddProductModal({ onClose, onAdd, initialProduct = null }) {
   const [name, setName] = useState(initialProduct?.name || "");
-  const [category, setCategory] = useState(initialProduct?.category || "Other");
+  const [category, setCategory] = useState(CATEGORY_OPTIONS.includes(initialProduct?.category) ? initialProduct.category : initialProduct?.category ? "Custom" : "Other");
+  const [customCategory, setCustomCategory] = useState(CATEGORY_OPTIONS.includes(initialProduct?.category) ? "" : initialProduct?.category || "");
   const [link, setLink] = useState(initialProduct?.link || "");
   const [media, setMedia] = useState(initialProduct?.media || []);
   const [error, setError] = useState("");
@@ -60,7 +61,7 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
       ...(initialProduct || {}),
       id: initialProduct?.id || Date.now(),
       name: name.trim(),
-      category,
+      category: category === "Custom" ? customCategory.trim() || "Other" : category,
       price: initialProduct?.price || "—",
       commission: initialProduct?.commission || "",
       buyers: initialProduct?.buyers || 0,
@@ -116,7 +117,9 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
             <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Product category</label>
             <select value={category} onChange={(event) => setCategory(event.target.value)} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }}>
               {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+              <option value="Custom">Add a new category...</option>
             </select>
+            {category === "Custom" && <input value={customCategory} onChange={(event) => setCustomCategory(event.target.value)} placeholder="e.g. Appliances" className="w-full mt-2 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} />}
           </div>
 
           <div>
@@ -237,7 +240,7 @@ function AnalyticsPanel({ products }) {
 }
 
 function MessagesPanel({ messages, onMarkRead, onDelete }) {
-  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>INBOX</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Help center messages</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Questions sent from your public page appear here.</p>{messages.length === 0 ? <div className="rounded-xl p-10 text-center" style={{ background: CARD, border: `1px dashed ${INK}22` }}><Inbox size={30} color={GOLD} className="mx-auto" /><p className="font-semibold mt-3" style={{ color: INK }}>Your inbox is clear</p><p className="text-sm mt-1" style={{ color: `${INK}77` }}>Public questions will appear here.</p></div> : <div className="space-y-3">{messages.map((message) => <div key={message.id} className="rounded-xl p-4" style={{ background: CARD, border: `1px solid ${message.read ? `${INK}14` : `${GOLD}66`}` }}><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-sm" style={{ color: INK }}>{message.name} <span className="font-normal" style={{ color: `${INK}66` }}>{message.email}</span></p><p className="text-sm mt-2 whitespace-pre-wrap" style={{ color: `${INK}88` }}>{message.text}</p></div><span className="text-xs whitespace-nowrap" style={{ color: `${INK}66` }}>{message.createdAt}</span></div><div className="flex gap-3 mt-3"><button onClick={() => onMarkRead(message.id)} className="text-xs font-medium" style={{ color: FOREST }}>{message.read ? "Mark unread" : "Mark read"}</button><button onClick={() => onDelete(message.id)} className="text-xs font-medium" style={{ color: "#B34A3C" }}>Delete</button></div></div>)}</div>}</div>;
+  return <div className="w-full px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>INBOX</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Help center messages</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Questions sent from your public page appear here.</p>{messages.length === 0 ? <div className="rounded-xl p-10 text-center" style={{ background: CARD, border: `1px dashed ${INK}22` }}><Inbox size={30} color={GOLD} className="mx-auto" /><p className="font-semibold mt-3" style={{ color: INK }}>Your inbox is clear</p><p className="text-sm mt-1" style={{ color: `${INK}77` }}>Public questions will appear here.</p></div> : <div className="space-y-3">{messages.map((message) => <div key={message.id} className="rounded-xl p-4" style={{ background: CARD, border: `1px solid ${message.read ? `${INK}14` : `${GOLD}66`}` }}><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-sm" style={{ color: INK }}>{message.name} <span className="font-normal" style={{ color: `${INK}66` }}>{message.email || "No email provided"}</span></p><p className="text-sm mt-2 whitespace-pre-wrap" style={{ color: `${INK}88` }}>{message.text}</p></div><span className="text-xs whitespace-nowrap" style={{ color: `${INK}66` }}>{message.createdAt}</span></div><div className="flex flex-wrap gap-3 mt-3"><button onClick={() => onMarkRead(message.id)} className="text-xs font-medium" style={{ color: FOREST }}>{message.read ? "Mark unread" : "Mark read"}</button>{message.email && <a href={`mailto:${message.email}?subject=Re: Your Linklist message`} className="text-xs font-medium" style={{ color: FOREST }}>Reply by email</a>}<button onClick={() => onDelete(message.id)} className="text-xs font-medium" style={{ color: "#B34A3C" }}>Delete</button></div></div>)}</div>}</div>;
 }
 
 function PublicMessageForm({ onSend, creatorName }) {
@@ -396,7 +399,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
             <Settings size={16} /> Settings
           </button>
           <div className="flex items-center gap-2 pt-3 mt-2 border-t" style={{ borderColor: `${INK}14` }}>
-            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold" style={{ background: GOLD, color: "#fff" }}>{profile.logo ? <img src={profile.logo} alt="Profile" className="w-full h-full object-cover" /> : "JL"}</div>
+            <button onClick={() => setProfileOpen(true)} className="flex items-center gap-2 text-left rounded-lg px-1.5 py-1 hover:bg-black/5" title="Open account settings"><div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold" style={{ background: GOLD, color: "#fff" }}>{profile.logo ? <img src={profile.logo} alt="Profile" className="w-full h-full object-cover" /> : "JL"}</div><span className="hidden lg:block text-xs" style={{ color: INK }}>{profile.name}<span className="block" style={{ color: `${INK}66` }}>Owner account</span></span></button>
             <div className="text-xs">
               <p className="font-medium truncate" style={{ color: INK }}>{profile.name}</p>
               <p style={{ color: `${INK}77` }}>Owner account</p>
@@ -529,6 +532,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
       {editingProduct && <AddProductModal initialProduct={editingProduct} onClose={() => setEditingProduct(null)} onAdd={(product) => { updateProduct(product); setEditingProduct(null); }} />}
       {profileOpen && <ProfileModal profile={profile} onSave={setProfile} onClose={() => setProfileOpen(false)} />}
       <LinkCart links={cart} onRemove={(id) => setCart((prev) => prev.filter((item) => item.id !== id))} onClear={() => setCart([])} onOpenAll={() => cart.forEach((product) => window.open(product.link, "_blank", "noopener,noreferrer"))} />
+      <button onClick={() => setDashboardView("messages")} className="fixed bottom-4 left-4 z-30 flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold shadow-lg" style={{ background: CARD, border: `1px solid ${INK}22`, color: FOREST }}><HelpCircle size={14} /> Help center</button>
       {notice && <button onClick={() => setNotice("")} className="fixed bottom-4 left-4 z-40 max-w-xs rounded-lg px-4 py-3 text-left text-xs shadow-lg" style={{ background: INK, color: "#fff" }}>{notice}</button>}
     </div>
   );
@@ -537,7 +541,8 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
 function PublicPage({ products, setPage, cart, setCart, profile, setProducts, setMessages }) {
   const [toast, setToast] = useState("");
   const published = products.filter((p) => p.published);
-  const groupedProducts = CATEGORY_OPTIONS.map((category) => ({ category, products: published.filter((product) => (product.category || "Other") === category) })).filter((group) => group.products.length);
+  const categories = [...new Set([...CATEGORY_OPTIONS, ...published.map((product) => product.category || "Other")])];
+  const groupedProducts = categories.map((category) => ({ category, products: published.filter((product) => (product.category || "Other") === category) })).filter((group) => group.products.length);
 
   const handleClick = (p) => {
     setProducts((current) => current.map((product) => product.id === p.id ? { ...product, clicks: (product.clicks || 0) + 1 } : product));
