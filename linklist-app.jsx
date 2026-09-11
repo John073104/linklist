@@ -7,6 +7,7 @@ const INK = "#1F1B14";
 const GOLD = "#B8935F";
 const FOREST = "#2E4A3D";
 const DEFAULT_PROFILE = { name: "John Lloyd B. Jardines", bio: "Products I actually use and recommend.", passcode: "linklist", logo: "" };
+const CATEGORY_OPTIONS = ["Men's fashion", "Women's fashion", "Motor parts", "Supplements", "Food & drink", "Home & lifestyle", "Tech", "Other"];
 
 function Logo({ avatar = "" }) {
   return (
@@ -21,6 +22,7 @@ function Logo({ avatar = "" }) {
 
 function AddProductModal({ onClose, onAdd, initialProduct = null }) {
   const [name, setName] = useState(initialProduct?.name || "");
+  const [category, setCategory] = useState(initialProduct?.category || "Other");
   const [link, setLink] = useState(initialProduct?.link || "");
   const [media, setMedia] = useState(initialProduct?.media || []);
   const [error, setError] = useState("");
@@ -58,6 +60,7 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
       ...(initialProduct || {}),
       id: initialProduct?.id || Date.now(),
       name: name.trim(),
+      category,
       price: initialProduct?.price || "—",
       commission: initialProduct?.commission || "",
       buyers: initialProduct?.buyers || 0,
@@ -107,6 +110,13 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
               style={{ borderColor: `${INK}22`, color: INK, background: CREAM }}
             />
             <p className="text-xs mt-1" style={{ color: `${INK}77` }}>Visitors get redirected here when they click.</p>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Product category</label>
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }}>
+              {CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
           </div>
 
           <div>
@@ -213,7 +223,7 @@ function OwnerGate({ profile, onUnlock }) {
 function OverviewPanel({ products, setDashboardView, setPage, openSettings }) {
   const published = products.filter((product) => product.published).length;
   const mediaCount = products.reduce((total, product) => total + (product.media?.length || 0), 0);
-  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>WORKSPACE OVERVIEW</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Good to see you.</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>A quick view of your Linklist workspace.</p><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><StatCard label="Catalog size" value={products.length} sub="products" /><StatCard label="Live picks" value={published} sub="published" /><StatCard label="Media assets" value={mediaCount} sub="uploaded" /></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Next steps</h2><div className="space-y-3 mt-4 text-sm" style={{ color: `${INK}88` }}><button onClick={() => setDashboardView("products")} className="block w-full text-left hover:underline">Add products to your catalog</button><button onClick={() => setDashboardView("analytics")} className="block w-full text-left hover:underline">Review link performance</button><button onClick={openSettings} className="block w-full text-left hover:underline">Update your account profile</button></div></div><div className="rounded-xl p-5" style={{ background: FOREST, color: "#fff" }}><TrendingUp size={22} /><h2 className="font-semibold mt-3">Public page</h2><p className="text-sm mt-1 opacity-80">Your visitors can only see published products, never this dashboard.</p><button onClick={() => setPage("public")} className="mt-4 rounded-lg px-3 py-2 text-xs font-semibold" style={{ background: GOLD }}>Open public page</button></div></div></div>;
+  return <div className="w-full px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>WORKSPACE OVERVIEW</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Good to see you.</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>A quick view of your Linklist workspace.</p><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><StatCard label="Catalog size" value={products.length} sub="products" /><StatCard label="Live picks" value={published} sub="published" /><StatCard label="Media assets" value={mediaCount} sub="uploaded" /></div><div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Next steps</h2><div className="space-y-3 mt-4 text-sm" style={{ color: `${INK}88` }}><button onClick={() => setDashboardView("products")} className="block w-full text-left hover:underline">Add products to your catalog</button><button onClick={() => setDashboardView("analytics")} className="block w-full text-left hover:underline">Review link performance</button><button onClick={openSettings} className="block w-full text-left hover:underline">Update your account profile</button></div></div><div className="rounded-xl p-5" style={{ background: FOREST, color: "#fff" }}><TrendingUp size={22} /><h2 className="font-semibold mt-3">Public page</h2><p className="text-sm mt-1 opacity-80">Your visitors can only see published products, never this dashboard.</p><button onClick={() => setPage("public")} className="mt-4 rounded-lg px-3 py-2 text-xs font-semibold" style={{ background: GOLD }}>Open public page</button></div></div></div>;
 }
 
 function AnalyticsPanel({ products }) {
@@ -223,7 +233,7 @@ function AnalyticsPanel({ products }) {
   const buyers = products.reduce((total, product) => total + (product.buyers || 0), 0);
   const sales = products.reduce((total, product) => total + (product.sales || 0), 0);
   const earnings = products.reduce((total, product) => total + ((product.sales || 0) * (Number.parseFloat(product.commission) || 0) / 100), 0);
-  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>PERFORMANCE</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Analytics</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Live catalog activity and estimated affiliate earnings.</p><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"><StatCard label="Link clicks" value={clicks} sub="tracked" /><StatCard label="Buyers" value={buyers} sub="recorded" /><StatCard label="Sales" value={`$${sales.toFixed(2)}`} sub="recorded value" /><StatCard label="Est. earnings" value={`$${earnings.toFixed(2)}`} sub="commission" /></div><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Catalog status</h2><div className="mt-4 h-4 rounded-full overflow-hidden flex" style={{ background: `${INK}0F` }}><div style={{ width: `${products.length ? (published / products.length) * 100 : 0}%`, background: FOREST }} /><div style={{ flex: 1, background: GOLD }} /></div><div className="flex justify-between text-xs mt-2" style={{ color: `${INK}77` }}><span>{published} published</span><span>{draft} draft</span></div>{!products.length && <p className="text-sm mt-6" style={{ color: `${INK}77` }}>Add your first product to start collecting useful catalog insights.</p>}</div></div>;
+  return <div className="w-full px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>PERFORMANCE</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Analytics</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Live catalog activity and estimated affiliate earnings.</p><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"><StatCard label="Link clicks" value={clicks} sub="tracked" /><StatCard label="Buyers" value={buyers} sub="recorded" /><StatCard label="Sales" value={`$${sales.toFixed(2)}`} sub="recorded value" /><StatCard label="Est. earnings" value={`$${earnings.toFixed(2)}`} sub="commission" /></div><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Catalog status</h2><div className="mt-4 h-4 rounded-full overflow-hidden flex" style={{ background: `${INK}0F` }}><div style={{ width: `${products.length ? (published / products.length) * 100 : 0}%`, background: FOREST }} /><div style={{ flex: 1, background: GOLD }} /></div><div className="flex justify-between text-xs mt-2" style={{ color: `${INK}77` }}><span>{published} published</span><span>{draft} draft</span></div>{!products.length && <p className="text-sm mt-6" style={{ color: `${INK}77` }}>Add your first product to start collecting useful catalog insights.</p>}</div></div>;
 }
 
 function MessagesPanel({ messages, onMarkRead, onDelete }) {
@@ -276,7 +286,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onE
           <MediaStrip product={product} />
         </div>
         <div className="p-4 flex flex-col gap-2 flex-1">
-          <p className="font-semibold text-sm" style={{ color: INK }}>{product.name}</p>
+          <div className="flex items-center justify-between gap-2"><p className="font-semibold text-sm" style={{ color: INK }}>{product.name}</p><span className="rounded-full px-2 py-1 text-[10px]" style={{ background: `${GOLD}22`, color: FOREST }}>{product.category || "Other"}</span></div>
           <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: `${INK}88` }}>
             <label>Price<input value={product.price === "—" ? "" : product.price} onChange={(event) => onUpdateField(product.id, "price", event.target.value || "—")} placeholder="$48.00" className="w-full mt-1 rounded-md border px-2 py-1.5 text-xs" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
             <label>Commission %<input value={product.commission || ""} onChange={(event) => onUpdateField(product.id, "commission", event.target.value.replace(/[^0-9.]/g, ""))} placeholder="Optional" className="w-full mt-1 rounded-md border px-2 py-1.5 text-xs" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
@@ -305,6 +315,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onE
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate" style={{ color: INK }}>{product.name}</p>
         <p className="text-xs truncate" style={{ color: `${INK}77` }}>{product.link}</p>
+        <p className="text-[10px] mt-1" style={{ color: FOREST }}>{product.category || "Other"}</p>
       </div>
       <label className="text-[10px] text-right" style={{ color: `${INK}88` }}>Price<input value={product.price === "—" ? "" : product.price} onChange={(event) => onUpdateField(product.id, "price", event.target.value || "—")} className="w-16 mt-1 rounded border px-1 py-1 text-xs text-right" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
       <label className="text-[10px] text-right" style={{ color: `${INK}88` }}>Comm.<input value={product.commission || ""} onChange={(event) => onUpdateField(product.id, "commission", event.target.value.replace(/[^0-9.]/g, ""))} placeholder="—" className="w-20 mt-1 rounded border px-1 py-1 text-xs text-right" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></label>
@@ -526,6 +537,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
 function PublicPage({ products, setPage, cart, setCart, profile, setProducts, setMessages }) {
   const [toast, setToast] = useState("");
   const published = products.filter((p) => p.published);
+  const groupedProducts = CATEGORY_OPTIONS.map((category) => ({ category, products: published.filter((product) => (product.category || "Other") === category) })).filter((group) => group.products.length);
 
   const handleClick = (p) => {
     setProducts((current) => current.map((product) => product.id === p.id ? { ...product, clicks: (product.clicks || 0) + 1 } : product));
@@ -561,8 +573,8 @@ function PublicPage({ products, setPage, cart, setCart, profile, setProducts, se
             <p className="text-sm mt-2 max-w-md" style={{ color: `${INK}77` }}>{profile.bio} New recommendations will appear here soon.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-            {published.map((p) => (
+          <div className="space-y-10">
+            {groupedProducts.map((group) => <section key={group.category}><div className="flex items-center gap-3 mb-4"><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>{group.category}</h2><span className="text-xs" style={{ color: `${INK}66` }}>{group.products.length} {group.products.length === 1 ? "item" : "items"}</span></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">{group.products.map((p) => (
               <div
                 key={p.id}
                 className="text-left rounded-2xl overflow-hidden group transition-transform hover:-translate-y-0.5"
@@ -579,7 +591,7 @@ function PublicPage({ products, setPage, cart, setCart, profile, setProducts, se
                   <div className="flex items-center justify-between gap-2 mt-2"><p className="text-sm font-medium" style={{ color: FOREST }}>{p.price}</p><button onClick={(event) => addToCart(event, p)} className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium" style={{ borderColor: `${INK}22`, color: FOREST }}><ShoppingBag size={13} /> Save link</button></div>
                 </div>
               </div>
-            ))}
+            ))}</div></section>)}
           </div>
         )}
         <PublicMessageForm creatorName={profile.name} onSend={(message) => setMessages((current) => [message, ...current])} />
@@ -598,7 +610,7 @@ function PublicPage({ products, setPage, cart, setCart, profile, setProducts, se
 export default function App() {
   const [page, setPage] = useState(() => new URLSearchParams(window.location.search).get("view") === "public" ? "public" : "creator");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem("linklist-products") || "[]").map((product) => ({ clicks: 0, buyers: 0, sales: 0, ...product })));
+  const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem("linklist-products") || "[]").map((product) => ({ clicks: 0, buyers: 0, sales: 0, category: "Other", ...product })));
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("linklist-cart") || "[]"));
   const [messages, setMessages] = useState(() => JSON.parse(localStorage.getItem("linklist-messages") || "[]"));
   const [profile, setProfile] = useState(() => {
