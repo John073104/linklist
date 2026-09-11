@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { LayoutGrid, Package, BarChart3, HelpCircle, Settings, Plus, Search, ChevronLeft, ChevronRight, List, Grid3x3, ExternalLink, X, Trash2, Eye, EyeOff, ArrowLeft, ShoppingBag, Play, Upload, UserRound, LockKeyhole, Save, TrendingUp } from "lucide-react";
+import { LayoutGrid, Package, BarChart3, HelpCircle, Settings, Plus, Search, ChevronLeft, ChevronRight, List, Grid3x3, ExternalLink, X, Trash2, Eye, EyeOff, ArrowLeft, ShoppingBag, Play, Upload, LockKeyhole, Save, TrendingUp, MousePointerClick, Users, DollarSign, MessageCircle, Send, Inbox, Copy } from "lucide-react";
 
 const CREAM = "#F7F3E9";
 const CARD = "#FFFDF8";
 const INK = "#1F1B14";
 const GOLD = "#B8935F";
 const FOREST = "#2E4A3D";
+const DEFAULT_PROFILE = { name: "John Lloyd B. Jardines", bio: "Products I actually use and recommend.", passcode: "linklist" };
 
 function Logo() {
   return (
@@ -22,6 +23,8 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
   const [name, setName] = useState(initialProduct?.name || "");
   const [price, setPrice] = useState(initialProduct?.price === "—" ? "" : initialProduct?.price || "");
   const [commission, setCommission] = useState(initialProduct?.commission || "");
+  const [buyers, setBuyers] = useState(String(initialProduct?.buyers ?? 0));
+  const [sales, setSales] = useState(String(initialProduct?.sales ?? 0));
   const [link, setLink] = useState(initialProduct?.link || "");
   const [media, setMedia] = useState(initialProduct?.media || []);
   const [error, setError] = useState("");
@@ -61,6 +64,9 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
       name: name.trim(),
       price: price.trim() || "—",
       commission: commission.trim(),
+      buyers: Math.max(0, Number.parseInt(buyers, 10) || 0),
+      sales: Math.max(0, Number.parseFloat(sales) || 0),
+      clicks: initialProduct?.clicks || 0,
       link: link.trim(),
       media,
       published: initialProduct?.published ?? true,
@@ -115,6 +121,17 @@ function AddProductModal({ onClose, onAdd, initialProduct = null }) {
                 className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border"
                 style={{ borderColor: `${INK}22`, color: INK, background: CREAM }}
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Buyers</label>
+              <input type="number" min="0" value={buyers} onChange={(event) => setBuyers(event.target.value)} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} />
+            </div>
+            <div>
+              <label className="text-xs font-medium tracking-wide" style={{ color: `${INK}99` }}>Sales value</label>
+              <input type="number" min="0" step="0.01" value={sales} onChange={(event) => setSales(event.target.value)} placeholder="0.00" className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} />
             </div>
           </div>
 
@@ -178,6 +195,15 @@ function StatCard({ label, value, sub }) {
 
 function ProfileModal({ profile, onSave, onClose }) {
   const [draft, setDraft] = useState(profile);
+  const [error, setError] = useState("");
+  const save = () => {
+    if (!draft.name.trim() || !draft.passcode.trim()) {
+      setError("Display name and passcode cannot be blank.");
+      return;
+    }
+    onSave({ ...draft, name: draft.name.trim(), bio: draft.bio.trim() || "Products I actually use and recommend.", passcode: draft.passcode.trim() });
+    onClose();
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(31,27,20,0.45)" }} onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: CARD, border: `1px solid ${GOLD}33` }} onClick={(event) => event.stopPropagation()}>
@@ -187,7 +213,8 @@ function ProfileModal({ profile, onSave, onClose }) {
           <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Bio<input value={draft.bio} onChange={(event) => setDraft({ ...draft, bio: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
           <label className="block text-xs font-medium" style={{ color: `${INK}99` }}>Owner passcode<input type="password" value={draft.passcode} onChange={(event) => setDraft({ ...draft, passcode: event.target.value })} className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, color: INK, background: CREAM }} /></label>
           <p className="text-xs" style={{ color: `${INK}77` }}>This static site uses a browser passcode lock. For stronger protection, connect the app to a real authentication service.</p>
-          <button onClick={() => { onSave(draft); onClose(); }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium" style={{ background: FOREST, color: "#fff" }}><Save size={15} /> Save changes</button>
+          {error && <p className="text-xs" style={{ color: "#B34A3C" }}>{error}</p>}
+          <button onClick={save} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium" style={{ background: FOREST, color: "#fff" }}><Save size={15} /> Save changes</button>
         </div>
       </div>
     </div>
@@ -210,8 +237,32 @@ function OverviewPanel({ products, setDashboardView, setPage, openSettings }) {
 function AnalyticsPanel({ products }) {
   const published = products.filter((product) => product.published).length;
   const draft = products.length - published;
-  const commissions = products.reduce((total, product) => total + Number.parseFloat(product.commission || 0), 0);
-  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>PERFORMANCE</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Analytics</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Catalog health and commission overview.</p><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><StatCard label="Published rate" value={products.length ? `${Math.round((published / products.length) * 100)}%` : "0%"} sub="of products" /><StatCard label="Draft products" value={draft} sub="need review" /><StatCard label="Commission total" value={`${commissions.toFixed(1)}%`} sub="listed rates" /></div><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Catalog status</h2><div className="mt-4 h-4 rounded-full overflow-hidden flex" style={{ background: `${INK}0F` }}><div style={{ width: `${products.length ? (published / products.length) * 100 : 0}%`, background: FOREST }} /><div style={{ flex: 1, background: GOLD }} /></div><div className="flex justify-between text-xs mt-2" style={{ color: `${INK}77` }}><span>{published} published</span><span>{draft} draft</span></div>{!products.length && <p className="text-sm mt-6" style={{ color: `${INK}77` }}>Add your first product to start collecting useful catalog insights.</p>}</div></div>;
+  const clicks = products.reduce((total, product) => total + (product.clicks || 0), 0);
+  const buyers = products.reduce((total, product) => total + (product.buyers || 0), 0);
+  const sales = products.reduce((total, product) => total + (product.sales || 0), 0);
+  const earnings = products.reduce((total, product) => total + ((product.sales || 0) * (Number.parseFloat(product.commission) || 0) / 100), 0);
+  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>PERFORMANCE</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Analytics</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Live catalog activity and estimated affiliate earnings.</p><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"><StatCard label="Link clicks" value={clicks} sub="tracked" /><StatCard label="Buyers" value={buyers} sub="recorded" /><StatCard label="Sales" value={`$${sales.toFixed(2)}`} sub="recorded value" /><StatCard label="Est. earnings" value={`$${earnings.toFixed(2)}`} sub="commission" /></div><div className="rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><h2 className="font-semibold" style={{ color: INK }}>Catalog status</h2><div className="mt-4 h-4 rounded-full overflow-hidden flex" style={{ background: `${INK}0F` }}><div style={{ width: `${products.length ? (published / products.length) * 100 : 0}%`, background: FOREST }} /><div style={{ flex: 1, background: GOLD }} /></div><div className="flex justify-between text-xs mt-2" style={{ color: `${INK}77` }}><span>{published} published</span><span>{draft} draft</span></div>{!products.length && <p className="text-sm mt-6" style={{ color: `${INK}77` }}>Add your first product to start collecting useful catalog insights.</p>}</div></div>;
+}
+
+function MessagesPanel({ messages, onMarkRead, onDelete }) {
+  return <div className="max-w-6xl px-4 sm:px-8 py-6 sm:py-8"><p className="text-xs tracking-wider font-medium" style={{ color: `${INK}66` }}>INBOX</p><h1 className="text-3xl sm:text-4xl font-bold mt-1" style={{ fontFamily: "Georgia, serif", color: INK }}>Help center messages</h1><p className="text-sm mt-1 mb-6" style={{ color: `${INK}88` }}>Questions sent from your public page appear here.</p>{messages.length === 0 ? <div className="rounded-xl p-10 text-center" style={{ background: CARD, border: `1px dashed ${INK}22` }}><Inbox size={30} color={GOLD} className="mx-auto" /><p className="font-semibold mt-3" style={{ color: INK }}>Your inbox is clear</p><p className="text-sm mt-1" style={{ color: `${INK}77` }}>Public questions will appear here.</p></div> : <div className="space-y-3">{messages.map((message) => <div key={message.id} className="rounded-xl p-4" style={{ background: CARD, border: `1px solid ${message.read ? `${INK}14` : `${GOLD}66`}` }}><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-sm" style={{ color: INK }}>{message.name} <span className="font-normal" style={{ color: `${INK}66` }}>{message.email}</span></p><p className="text-sm mt-2 whitespace-pre-wrap" style={{ color: `${INK}88` }}>{message.text}</p></div><span className="text-xs whitespace-nowrap" style={{ color: `${INK}66` }}>{message.createdAt}</span></div><div className="flex gap-3 mt-3"><button onClick={() => onMarkRead(message.id)} className="text-xs font-medium" style={{ color: FOREST }}>{message.read ? "Mark unread" : "Mark read"}</button><button onClick={() => onDelete(message.id)} className="text-xs font-medium" style={{ color: "#B34A3C" }}>Delete</button></div></div>)}</div>}</div>;
+}
+
+function PublicMessageForm({ onSend, creatorName }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+  const submit = () => {
+    if (!name.trim() || !text.trim()) return;
+    onSend({ id: Date.now(), name: name.trim(), email: email.trim(), text: text.trim(), read: false, createdAt: new Date().toLocaleString() });
+    setName("");
+    setEmail("");
+    setText("");
+    setSent(true);
+    setTimeout(() => setSent(false), 2500);
+  };
+  return <div className="mt-8 rounded-xl p-5" style={{ background: CARD, border: `1px solid ${INK}14` }}><div className="flex items-center gap-2"><MessageCircle size={18} color={FOREST} /><h2 className="font-semibold" style={{ color: INK }}>Have a question?</h2></div><p className="text-sm mt-1" style={{ color: `${INK}77` }}>Send a message to {creatorName}. It will appear in the creator's Help Center.</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4"><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name *" className="px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /><input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email (optional)" className="px-3 py-2.5 rounded-lg text-sm outline-none border" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /></div><textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Write your question or concern..." rows="3" className="w-full mt-3 px-3 py-2.5 rounded-lg text-sm outline-none border resize-y" style={{ borderColor: `${INK}22`, background: CREAM, color: INK }} /><button onClick={submit} className="mt-3 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium" style={{ background: FOREST, color: "#fff" }}><Send size={14} /> Send message</button>{sent && <p className="text-xs mt-2" style={{ color: FOREST }}>Message sent.</p>}</div>;
 }
 
 function MediaStrip({ product, compact = false }) {
@@ -246,7 +297,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onE
           <p className="font-semibold text-sm" style={{ color: INK }}>{product.name}</p>
           <div className="flex items-center justify-between text-xs" style={{ color: `${INK}88` }}>
             <span>{product.price}</span>
-            <span>{product.commission}% commission</span>
+            <span>{product.commission ? `${product.commission}% commission` : "Commission —"}</span>
           </div>
           <div className="flex gap-1.5 mt-auto pt-2">
             <button onClick={() => onTogglePublish(product.id)} className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-xs font-medium border" style={{ borderColor: `${INK}22`, color: INK }}>
@@ -272,7 +323,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onE
         <p className="text-xs truncate" style={{ color: `${INK}77` }}>{product.link}</p>
       </div>
       <span className="text-xs w-16 text-right" style={{ color: `${INK}88` }}>{product.price}</span>
-      <span className="text-xs w-24 text-right" style={{ color: `${INK}88` }}>{product.commission}% comm.</span>
+      <span className="text-xs w-24 text-right" style={{ color: `${INK}88` }}>{product.commission ? `${product.commission}% comm.` : "—"}</span>
       <span
         className="text-xs px-2 py-1 rounded-full w-24 text-center"
         style={{ background: product.published ? `${FOREST}1A` : `${INK}0F`, color: product.published ? FOREST : `${INK}88` }}
@@ -291,7 +342,7 @@ function ProductRow({ product, view, onTogglePublish, onDelete, onAddToCart, onE
   );
 }
 
-function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profile, setProfile, onLock }) {
+function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profile, setProfile, messages, setMessages, onLock }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -309,6 +360,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
   const deleteProduct = (id) => setProducts((prev) => prev.filter((p) => p.id !== id));
   const updateProduct = (product) => setProducts((prev) => prev.map((item) => item.id === product.id ? product : item));
   const addToCart = (product) => setCart((prev) => prev.some((item) => item.id === product.id) ? prev : [...prev, product]);
+  const unreadMessages = messages.filter((message) => !message.read).length;
 
   let visible = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
   if (filter === "published") visible = visible.filter((p) => p.published);
@@ -316,10 +368,6 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
   visible = [...visible].sort((a, b) => (sort === "newest" ? b.id - a.id : a.id - b.id));
 
   const publishedCount = products.filter((p) => p.published).length;
-  const avgCommission = products.length
-    ? (products.reduce((s, p) => s + parseFloat(p.commission || 0), 0) / products.length).toFixed(1)
-    : "9.0";
-
   return (
     <div className="min-h-screen flex" style={{ background: CREAM, fontFamily: "system-ui, sans-serif" }}>
       {/* Sidebar */}
@@ -345,8 +393,8 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
           <button onClick={() => setPage("public")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium" style={{ color: FOREST }}>
             <ExternalLink size={16} /> View public page
           </button>
-          <button onClick={() => setNotice("Help: add products, publish them, then open your public page.")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: INK }}>
-            <HelpCircle size={16} /> Help center
+          <button onClick={() => setDashboardView("messages")} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${dashboardView === "messages" ? "font-medium" : ""}`} style={{ background: dashboardView === "messages" ? `${GOLD}2A` : "transparent", color: INK }}>
+            <HelpCircle size={16} /> Help center {unreadMessages > 0 && <span className="ml-auto rounded-full px-1.5 py-0.5 text-[10px]" style={{ background: GOLD, color: "#fff" }}>{unreadMessages}</span>}
           </button>
           <button onClick={() => setProfileOpen(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: INK }}>
             <Settings size={16} /> Settings
@@ -377,6 +425,7 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
 
         {dashboardView === "overview" && <OverviewPanel products={products} setDashboardView={setDashboardView} setPage={setPage} openSettings={() => setProfileOpen(true)} />}
         {dashboardView === "analytics" && <AnalyticsPanel products={products} />}
+        {dashboardView === "messages" && <MessagesPanel messages={messages} onMarkRead={(id) => setMessages((current) => current.map((message) => message.id === id ? { ...message, read: !message.read } : message))} onDelete={(id) => setMessages((current) => current.filter((message) => message.id !== id))} />}
         {dashboardView === "products" && <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
             <div>
@@ -393,10 +442,13 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <StatCard label="Total products" value={products.length} sub="in your catalog" />
             <StatCard label="Published" value={publishedCount} sub="live on your page" />
-            <StatCard label="Avg. commission" value={products.some((p) => p.commission) ? `${avgCommission}%` : "—"} sub="across all products" />
+            <StatCard label="Link clicks" value={products.reduce((total, product) => total + (product.clicks || 0), 0)} sub="tracked" />
+            <StatCard label="Buyers" value={products.reduce((total, product) => total + (product.buyers || 0), 0)} sub="recorded" />
+            <StatCard label="Sales" value={`$${products.reduce((total, product) => total + (product.sales || 0), 0).toFixed(2)}`} sub="recorded value" />
+            <StatCard label="Est. earnings" value={`$${products.reduce((total, product) => total + ((product.sales || 0) * (Number.parseFloat(product.commission) || 0) / 100), 0).toFixed(2)}`} sub="commission" />
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
@@ -486,11 +538,12 @@ function CreatorDashboard({ products, setProducts, setPage, cart, setCart, profi
   );
 }
 
-function PublicPage({ products, setPage, cart, setCart, profile }) {
+function PublicPage({ products, setPage, cart, setCart, profile, setProducts, setMessages }) {
   const [toast, setToast] = useState("");
   const published = products.filter((p) => p.published);
 
   const handleClick = (p) => {
+    setProducts((current) => current.map((product) => product.id === p.id ? { ...product, clicks: (product.clicks || 0) + 1 } : product));
     setToast(`Redirecting to ${p.name}...`);
     window.open(p.link, "_blank", "noopener,noreferrer");
     setTimeout(() => setToast(""), 2500);
@@ -511,7 +564,7 @@ function PublicPage({ products, setPage, cart, setCart, profile }) {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14 text-center">
         <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-xl font-bold mb-4" style={{ background: GOLD, color: "#fff" }}>JL</div>
-        <h1 className="text-3xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>John Lloyd's picks</h1>
+        <h1 className="text-3xl font-bold" style={{ fontFamily: "Georgia, serif", color: INK }}>{profile.name}'s picks</h1>
         <p className="text-sm mt-2" style={{ color: `${INK}88` }}>{profile.bio}</p>
       </div>
 
@@ -544,6 +597,7 @@ function PublicPage({ products, setPage, cart, setCart, profile }) {
             ))}
           </div>
         )}
+        <PublicMessageForm creatorName={profile.name} onSend={(message) => setMessages((current) => [message, ...current])} />
       </div>
 
       {toast && (
@@ -559,25 +613,31 @@ function PublicPage({ products, setPage, cart, setCart, profile }) {
 export default function App() {
   const [page, setPage] = useState(() => new URLSearchParams(window.location.search).get("view") === "public" ? "public" : "creator");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem("linklist-products") || "[]"));
+  const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem("linklist-products") || "[]").map((product) => ({ clicks: 0, buyers: 0, sales: 0, ...product })));
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("linklist-cart") || "[]"));
-  const [profile, setProfile] = useState(() => JSON.parse(localStorage.getItem("linklist-profile") || JSON.stringify({ name: "John Lloyd B. Jardines", bio: "Products I actually use and recommend.", passcode: "linklist" })));
+  const [messages, setMessages] = useState(() => JSON.parse(localStorage.getItem("linklist-messages") || "[]"));
+  const [profile, setProfile] = useState(() => {
+    const saved = JSON.parse(localStorage.getItem("linklist-profile") || "{}");
+    return { ...DEFAULT_PROFILE, ...saved, name: saved.name?.trim() || DEFAULT_PROFILE.name, bio: saved.bio?.trim() || DEFAULT_PROFILE.bio, passcode: saved.passcode?.trim() || DEFAULT_PROFILE.passcode };
+  });
 
   useEffect(() => localStorage.setItem("linklist-products", JSON.stringify(products)), [products]);
   useEffect(() => localStorage.setItem("linklist-cart", JSON.stringify(cart)), [cart]);
   useEffect(() => localStorage.setItem("linklist-profile", JSON.stringify(profile)), [profile]);
+  useEffect(() => localStorage.setItem("linklist-messages", JSON.stringify(messages)), [messages]);
   useEffect(() => {
     const sync = (event) => {
       if (event.key === "linklist-products" && event.newValue) setProducts(JSON.parse(event.newValue));
       if (event.key === "linklist-profile" && event.newValue) setProfile(JSON.parse(event.newValue));
+      if (event.key === "linklist-messages" && event.newValue) setMessages(JSON.parse(event.newValue));
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
 
-  if (page === "public") return <PublicPage products={products} setPage={setPage} cart={cart} setCart={setCart} profile={profile} />;
+  if (page === "public") return <PublicPage products={products} setPage={setPage} cart={cart} setCart={setCart} profile={profile} setProducts={setProducts} setMessages={setMessages} />;
   if (!adminUnlocked) return <OwnerGate profile={profile} onUnlock={() => setAdminUnlocked(true)} />;
   return (
-    <CreatorDashboard products={products} setProducts={setProducts} setPage={setPage} cart={cart} setCart={setCart} profile={profile} setProfile={setProfile} onLock={() => setAdminUnlocked(false)} />
+    <CreatorDashboard products={products} setProducts={setProducts} setPage={setPage} cart={cart} setCart={setCart} profile={profile} setProfile={setProfile} messages={messages} setMessages={setMessages} onLock={() => setAdminUnlocked(false)} />
   );
 }
